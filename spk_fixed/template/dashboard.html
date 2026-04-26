@@ -1,0 +1,249 @@
+{% extends "base_sidebar.html" %}
+{% block content %}
+<style>
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+    .stat-card { background:white; padding:1.4rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.07); border-left:5px solid #1976d2; }
+    .stat-value { font-size:2rem; font-weight:700; color:#1976d2; }
+    .stat-label { color:#666; font-size:0.85rem; margin-top:0.3rem; }
+    .chart-container { background:white; padding:1.8rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.07); margin-bottom:1.5rem; }
+    .chart-title { font-weight:600; color:#333; margin-bottom:1rem; font-size:1rem; }
+    .ranking-badge {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:32px; height:32px; border-radius:50%; background:#1976d2;
+        color:white; font-weight:700; font-size:0.9rem;
+    }
+    .rank-1 .ranking-badge { background:linear-gradient(135deg,#f9a825,#f57f17); }
+    .rank-2 .ranking-badge { background:linear-gradient(135deg,#78909c,#546e7a); }
+    .rank-3 .ranking-badge { background:linear-gradient(135deg,#8d6e63,#5d4037); }
+    .highlight-row { background:#e8f5e9 !important; }
+    @media print {
+        .sidebar, .topbar, .btn-group, footer { display:none !important; }
+        .main-content { margin-left:0 !important; }
+        .page-body { padding:0 !important; }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+{% if not ranking %}
+<div class="card">
+    <div style="text-align:center; padding:2rem;">
+        <div style="font-size:3rem; margin-bottom:1rem;">📊</div>
+        <h3>Belum Ada Hasil Analisis</h3>
+        <p style="color:#666; margin-bottom:1.5rem;">
+            Silakan lakukan analisis terlebih dahulu melalui menu Perbandingan Alternatif.
+        </p>
+        <a href="{{ url_for('alternatif_input') }}" class="btn-primary">Mulai Analisis →</a>
+    </div>
+</div>
+{% else %}
+
+<!-- SUMMARY STATS -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ k }}</div>
+        <div class="stat-label">Total Kriteria</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#388e3c;">
+        <div class="stat-value" style="color:#388e3c;">{{ a }}</div>
+        <div class="stat-label">Total Alternatif</div>
+    </div>
+    <div class="stat-card" style="border-left-color:{{ '#388e3c' if CR <= 0.1 else '#e53935' }};">
+        <div class="stat-value" style="color:{{ '#388e3c' if CR <= 0.1 else '#e53935' }};">{{ "%.4f"|format(CR) }}</div>
+        <div class="stat-label">CR Kriteria {{ '✔ Konsisten' if CR <= 0.1 else '✘ Tidak Konsisten' }}</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#f57c00;">
+        <div class="stat-value" style="color:#f57c00;">{{ ranking[0][0] if ranking else '-' }}</div>
+        <div class="stat-label">Alternatif Terbaik 🥇</div>
+    </div>
+</div>
+
+<!-- CHARTS -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+    <div class="chart-container">
+        <div class="chart-title">📊 Bobot Kriteria</div>
+        <canvas id="kriteriaChart" style="max-height:280px;"></canvas>
+    </div>
+    <div class="chart-container">
+        <div class="chart-title">🏆 Ranking Alternatif</div>
+        <canvas id="rankingChart" style="max-height:280px;"></canvas>
+    </div>
+</div>
+<div class="chart-container">
+    <div class="chart-title">📍 Distribusi Prioritas Alternatif (%)</div>
+    <canvas id="pieChart" style="max-height:300px;"></canvas>
+</div>
+
+<!-- DETAIL TABLES -->
+<div class="card">
+    <h3>📋 Detail Bobot Kriteria</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>#</th><th>Kriteria</th><th>Bobot</th><th>Persentase</th></tr></thead>
+            <tbody>
+                {% for i in range(nama_kriteria|length) %}
+                <tr>
+                    <td>{{ i+1 }}</td>
+                    <td><strong>{{ nama_kriteria[i] }}</strong></td>
+                    <td>{{ "%.6f"|format(weights[i]) }}</td>
+                    <td><strong>{{ "%.2f"|format(weights[i]*100) }}%</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h3>🏆 Ranking Alternatif</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Rank</th><th>Alternatif</th><th>Score</th><th>Persentase</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for nama, skor in ranking %}
+                <tr class="{{ 'highlight-row rank-' ~ loop.index }}">
+                    <td><span class="ranking-badge">{{ loop.index }}</span></td>
+                    <td><strong>{{ nama }}</strong></td>
+                    <td>{{ "%.6f"|format(skor) }}</td>
+                    <td><strong>{{ "%.2f"|format(skor*100) }}%</strong></td>
+                    <td>
+                        {% if loop.index == 1 %}🥇 Prioritas Utama
+                        {% elif loop.index == 2 %}🥈 Prioritas Kedua
+                        {% elif loop.index == 3 %}🥉 Prioritas Ketiga
+                        {% else %}Rank {{ loop.index }}{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if alt_cr_list %}
+<div class="card">
+    <h3>📐 Consistency Ratio per Kriteria</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Kriteria</th><th>CR</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for i in range(nama_kriteria|length) %}
+                <tr>
+                    <td>{{ nama_kriteria[i] }}</td>
+                    <td>{{ "%.4f"|format(alt_cr_list[i]) if i < alt_cr_list|length else '-' }}</td>
+                    <td>
+                        {% if i < alt_cr_list|length %}
+                            {% if alt_cr_list[i] <= 0.1 %}
+                            <span style="color:#388e3c;">✔ Konsisten</span>
+                            {% else %}
+                            <span style="color:#e53935;">✘ Tidak Konsisten</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- ACTION BUTTONS -->
+<div class="btn-group">
+    <button onclick="window.print()" class="btn-primary">🖨️ Cetak / Print</button>
+    <button onclick="downloadCSV()" class="btn-primary">📥 Download CSV</button>
+    <button onclick="downloadJSON()" class="btn-secondary">📄 Download JSON</button>
+    <a href="{{ url_for('history') }}" class="btn-secondary">📚 Lihat Riwayat</a>
+    <a href="{{ url_for('alternatif_input') }}" class="btn-secondary">🔄 Analisis Baru</a>
+</div>
+{% endif %}
+
+<script>
+{% if ranking %}
+const namaKriteria = {{ nama_kriteria | tojson }};
+const weights = {{ weights | tojson }};
+const rankingLabels = {{ ranking_labels | tojson }};
+const rankingScores = {{ ranking_scores | tojson }};
+const fullRanking = {{ ranking | tojson }};
+
+const COLORS = ['#1976d2','#388e3c','#f57c00','#7b1fa2','#e91e63','#0097a7','#558b2f','#ef6c00'];
+
+// Bobot Kriteria Chart
+new Chart(document.getElementById('kriteriaChart'), {
+    type: 'bar',
+    data: {
+        labels: namaKriteria,
+        datasets: [{ label:'Bobot', data: weights,
+            backgroundColor: COLORS.map(c => c+'cc'),
+            borderColor: COLORS, borderWidth:2, borderRadius:6 }]
+    },
+    options: { responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{display:false} },
+        scales:{ y:{ beginAtZero:true, max:1,
+            ticks:{ callback: v => (v*100).toFixed(0)+'%' } } } }
+});
+
+// Ranking Chart
+new Chart(document.getElementById('rankingChart'), {
+    type: 'bar',
+    data: {
+        labels: rankingLabels,
+        datasets: [{ label:'Score', data: rankingScores,
+            backgroundColor: '#388e3ccc', borderColor:'#388e3c',
+            borderWidth:2, borderRadius:6 }]
+    },
+    options: { responsive:true, maintainAspectRatio:true, indexAxis:'y',
+        plugins:{ legend:{display:false} },
+        scales:{ x:{ beginAtZero:true, max:1,
+            ticks:{ callback: v => (v*100).toFixed(0)+'%' } } } }
+});
+
+// Pie Chart
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels: rankingLabels,
+        datasets: [{ data: rankingScores,
+            backgroundColor: COLORS.map(c => c+'cc'),
+            borderColor:'white', borderWidth:2 }]
+    },
+    options: { responsive:true, maintainAspectRatio:true,
+        plugins:{ legend:{ position:'bottom' } } }
+});
+
+function downloadCSV() {
+    let csv = 'Rank,Alternatif,Score,Persentase\n';
+    fullRanking.forEach((item, i) => {
+        csv += `${i+1},"${item[0]}",${item[1].toFixed(6)},${(item[1]*100).toFixed(2)}%\n`;
+    });
+    csv += '\nKriteria,Bobot,Persentase\n';
+    namaKriteria.forEach((k, i) => {
+        csv += `"${k}",${weights[i].toFixed(6)},${(weights[i]*100).toFixed(2)}%\n`;
+    });
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'spk_ahp_hasil.csv';
+    a.click();
+}
+
+function downloadJSON() {
+    const data = {
+        kriteria: namaKriteria,
+        bobot_kriteria: weights,
+        ranking: fullRanking.map((item,i) => ({
+            rank: i+1, alternatif: item[0],
+            score: item[1], persentase: (item[1]*100).toFixed(2)+'%'
+        }))
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'spk_ahp_hasil.json';
+    a.click();
+}
+{% endif %}
+</script>
+
+{% endblock %}

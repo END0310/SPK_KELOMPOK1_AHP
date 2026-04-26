@@ -1,0 +1,157 @@
+{% extends "base_sidebar.html" %}
+{% block content %}
+<style>
+    .step-indicator {
+        display: flex; align-items: center; gap: 0; margin-bottom: 2rem; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .step {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.6rem 1.1rem; border-radius: 20px;
+        font-size: 0.85rem; font-weight: 600;
+        background: #e0e0e0; color: #888;
+    }
+    .step.active { background: #1976d2; color: white; }
+    .step.done { background: #388e3c; color: white; }
+    .step-arrow { color: #bbb; font-size: 1.1rem; margin: 0 0.2rem; }
+    .step-circle {
+        width: 22px; height: 22px; border-radius: 50%;
+        background: rgba(255,255,255,0.3); display: flex;
+        align-items: center; justify-content: center;
+        font-size: 0.75rem; font-weight: 700;
+    }
+    .panel { background: white; border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        padding: 2rem; margin-bottom: 1.5rem; display: none; }
+    .panel.active { display: block; }
+    .alt-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem; margin-bottom: 1.2rem;
+    }
+    .alt-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .alt-field label { font-weight: 600; font-size: 0.88rem; color: #333; }
+    .alt-field input {
+        padding: 0.65rem 1rem; border: 1.5px solid #ddd;
+        border-radius: 6px; font-size: 0.95rem; transition: border-color 0.2s;
+    }
+    .alt-field input:focus {
+        outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+    }
+    .badge-jumlah {
+        background: #1976d2; color: white; border-radius: 20px;
+        padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600; display: none;
+    }
+</style>
+
+<!-- STEP INDICATOR -->
+<div class="step-indicator">
+    <div class="step active" id="sind-1"><div class="step-circle">1</div> Jumlah Alternatif</div>
+    <span class="step-arrow">→</span>
+    <div class="step" id="sind-2"><div class="step-circle">2</div> Nama Alternatif</div>
+    <span class="step-arrow">→</span>
+    <div class="step" id="sind-3"><div class="step-circle">3</div> Tabel Perbandingan</div>
+    <span class="step-arrow">→</span>
+    <div class="step" id="sind-4"><div class="step-circle">4</div> Hasil Analisis</div>
+</div>
+
+{% if error %}
+<div class="error-box">❌ {{ error }}</div>
+{% endif %}
+
+<form method="post" id="mainForm">
+    <!-- STEP 1 -->
+    <div class="panel active" id="panel-1">
+        <h2 style="margin-bottom:0.4rem;">📊 Langkah 1: Jumlah Alternatif</h2>
+        <p style="color:#555; margin-bottom:1.2rem;">Tentukan berapa banyak alternatif yang ingin dibandingkan.</p>
+        <div class="info-box">
+            <strong>💡 Petunjuk:</strong> Masukkan jumlah antara <strong>2 – 20</strong>.
+            Contoh: jika ada 3 perangkat yang ingin diprioritaskan, isi angka <strong>3</strong>.
+        </div>
+        <div style="display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap; margin-bottom:1.2rem;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="alternatif">Jumlah Alternatif:</label>
+                <input type="number" id="alternatif" name="alternatif"
+                       min="2" max="20" placeholder="2 – 20"
+                       value="{{ a if a else '' }}"
+                       oninput="onJumlahChange(this.value)">
+            </div>
+            <div class="badge-jumlah" id="badge-jumlah">0 alternatif</div>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn-primary" id="btn-to-step2" onclick="goStep2()" disabled>
+                Lanjut: Isi Nama Alternatif →
+            </button>
+            <a href="{{ url_for('index') }}" class="btn-secondary">← Beranda</a>
+        </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel" id="panel-2">
+        <h2 style="margin-bottom:0.4rem;">✏️ Langkah 2: Nama Alternatif</h2>
+        <p style="color:#555; margin-bottom:1.2rem;">Isi nama masing-masing alternatif yang akan dibandingkan.</p>
+        <div id="alt-fields" class="alt-grid"></div>
+        <div class="btn-group">
+            <button type="submit" class="btn-success">Lanjut ke Tabel Perbandingan →</button>
+            <button type="button" class="btn-secondary" onclick="goStep1()">← Kembali</button>
+        </div>
+    </div>
+</form>
+
+<script>
+let jumlahAlt = 0;
+const prefill = {{ session.get('nama_alt', []) | tojson }};
+
+function onJumlahChange(val) {
+    const n = parseInt(val);
+    const badge = document.getElementById('badge-jumlah');
+    const btn = document.getElementById('btn-to-step2');
+    if (n >= 2 && n <= 20) {
+        badge.style.display = 'inline-block';
+        badge.textContent = n + ' alternatif';
+        btn.disabled = false;
+        jumlahAlt = n;
+    } else {
+        badge.style.display = 'none';
+        btn.disabled = true;
+        jumlahAlt = 0;
+    }
+}
+
+function goStep2() {
+    if (jumlahAlt < 2 || jumlahAlt > 20) return;
+    renderFields(jumlahAlt);
+    showStep(2);
+}
+
+function goStep1() { showStep(1); }
+
+function showStep(s) {
+    document.querySelectorAll('.panel').forEach((p, i) => {
+        p.classList.toggle('active', i + 1 === s);
+    });
+    document.querySelectorAll('.step-indicator .step').forEach((el, i) => {
+        el.classList.remove('active','done');
+        if (i + 1 < s) el.classList.add('done');
+        else if (i + 1 === s) el.classList.add('active');
+    });
+}
+
+function renderFields(n) {
+    let html = '';
+    for (let i = 0; i < n; i++) {
+        const v = prefill[i] || '';
+        html += `<div class="alt-field">
+            <label for="alt_${i}">Alternatif ${i+1}:</label>
+            <input type="text" id="alt_${i}" name="alt_${i}" required
+                   placeholder="Nama alternatif ${i+1}" value="${v}">
+        </div>`;
+    }
+    document.getElementById('alt-fields').innerHTML = html;
+}
+
+// Init
+{% if a %}
+onJumlahChange({{ a }});
+{% if error %}goStep2();{% endif %}
+{% endif %}
+</script>
+{% endblock %}
