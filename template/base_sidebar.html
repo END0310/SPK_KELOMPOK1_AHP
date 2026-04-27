@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SPK AHP{% endblock %} — Sistem Pendukung Keputusan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⚖️</div>
+      <div>
+        <div class="brand-title">SPK AHP</div>
+        <div class="brand-sub">Decision Support System</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Utama</div>
+      <a href="{{ url_for('index') }}"
+         class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+        <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
+        Beranda
+      </a>
+
+      <div class="nav-section-label">Input Data</div>
+      <a href="{{ url_for('alternatif_input') }}"
+         class="nav-item {% if request.endpoint == 'alternatif_input' %}active{% endif %}">
+        <span class="nav-icon"><i class="fa-solid fa-list-check"></i></span>
+        Input Alternatif
+      </a>
+      <a href="{{ url_for('alternatif_matrix') }}"
+         class="nav-item {% if request.endpoint == 'alternatif_matrix' %}active{% endif %}">
+        <span class="nav-icon"><i class="fa-solid fa-table-cells"></i></span>
+        Matriks Perbandingan
+      </a>
+
+      <div class="nav-section-label">Analisis &amp; Hasil</div>
+      <a href="{{ url_for('hasil_view') }}"
+         class="nav-item {% if request.endpoint == 'hasil_view' %}active{% endif %}">
+        <span class="nav-icon"><i class="fa-solid fa-trophy"></i></span>
+        Hasil Ranking
+      </a>
+      <a href="{{ url_for('dashboard_view') }}"
+         class="nav-item {% if request.endpoint == 'dashboard_view' %}active{% endif %}">
+        <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+        Dashboard
+      </a>
+
+      <div class="nav-section-label">Lainnya</div>
+      <a href="{{ url_for('history') }}"
+         class="nav-item {% if request.endpoint == 'history' %}active{% endif %}">
+        <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+        Riwayat
+      </a>
+      <a href="{{ url_for('prediksi') }}"
+         class="nav-item {% if request.endpoint == 'prediksi' %}active{% endif %}">
+        <span class="nav-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+        Prediksi
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      © 2026 SPK AHP v3 &nbsp;·&nbsp; Kelompok 1
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main-content">
+    <header class="topbar">
+      <div>
+        <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+        <div class="topbar-sub">{% block page_subtitle %}Sistem Pendukung Keputusan AHP{% endblock %}</div>
+      </div>
+      <div class="topbar-right">
+        <span style="font-size:12px;color:var(--text-muted);">
+          <i class="fa-regular fa-calendar"></i>&nbsp;
+          <span id="topbar-date"></span>
+        </span>
+      </div>
+    </header>
+
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      Sistem Pendukung Keputusan — Metode AHP &nbsp;·&nbsp; Kelompok 1 &nbsp;·&nbsp; 2026
+    </footer>
+  </div>
+
+</div>
+
+<script>
+  // Live date
+  const d = new Date();
+  document.getElementById('topbar-date').textContent =
+    d.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  // Stagger card animations
+  document.querySelectorAll('.card').forEach((el, i) => {
+    el.style.animationDelay = (i * 50) + 'ms';
+    el.style.animationFillMode = 'both';
+  });
+</script>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

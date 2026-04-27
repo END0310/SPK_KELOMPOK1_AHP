@@ -1,0 +1,87 @@
+{% extends "base_sidebar.html" %}
+{% block title %}Riwayat Analisis{% endblock %}
+{% block page_title %}Riwayat Analisis{% endblock %}
+{% block page_subtitle %}Catatan seluruh analisis AHP yang pernah dilakukan{% endblock %}
+
+{% block content %}
+
+{% if error %}
+<div class="alert alert-danger">
+  <i class="fa-solid fa-circle-exclamation"></i>
+  <span>{{ error }}</span>
+</div>
+{% endif %}
+
+{% if history %}
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><span class="icon">📋</span> Daftar Riwayat</div>
+    <span class="badge badge-indigo">{{ history|length }} Entri</span>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px;">No.</th>
+          <th style="min-width:140px;">Tanggal</th>
+          <th style="text-align:center;">Kriteria</th>
+          <th style="text-align:center;">Alternatif</th>
+          <th>Alternatif Terbaik</th>
+          <th style="text-align:center;">CR</th>
+          <th style="text-align:right;">Total Skor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in history %}
+        {% set best = h.ranking[0] if h.ranking else None %}
+        <tr>
+          <td>
+            <div class="rank-badge rank-n" style="font-size:11px;">{{ loop.index }}</div>
+          </td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ h.created_at }}</td>
+          <td style="text-align:center;font-weight:700;">{{ h.k }}</td>
+          <td style="text-align:center;font-weight:700;">{{ h.a }}</td>
+          <td>
+            {% if best %}
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="rank-badge rank-1" style="font-size:11px;">1</span>
+              <div>
+                <div style="font-weight:600;font-size:13px;">{{ best[0] }}</div>
+                <div style="font-size:11px;color:var(--text-muted);">{{ '%.4f'|format(best[1]) }}</div>
+              </div>
+            </div>
+            {% else %}-{% endif %}
+          </td>
+          <td style="text-align:center;">
+            <span class="cr-value {% if h.CR <= 0.1 %}cr-ok{% else %}cr-bad{% endif %}">
+              {{ '%.4f'|format(h.CR) }}
+            </span>
+          </td>
+          <td style="text-align:right;font-weight:700;">{{ '%.4f'|format(h.total_score) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <div class="empty-title">Belum Ada Riwayat</div>
+    <div class="empty-desc">Lakukan analisis AHP pertama Anda untuk melihat riwayat di sini.</div>
+    <div style="margin-top:24px;">
+      <a href="{{ url_for('alternatif_input') }}" class="btn btn-primary">
+        <i class="fa-solid fa-play"></i> Mulai Analisis
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

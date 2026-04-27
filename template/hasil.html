@@ -1,0 +1,180 @@
+{% extends "base_sidebar.html" %}
+{% block title %}Hasil Ranking{% endblock %}
+{% block page_title %}Hasil Ranking AHP{% endblock %}
+{% block page_subtitle %}Langkah 3 dari 3 — Ranking alternatif berdasarkan metode AHP{% endblock %}
+
+{% block content %}
+
+<!-- Step Indicator -->
+<div class="steps-wrapper">
+  <div class="step-item">
+    <div class="step-circle done"><i class="fa-solid fa-check" style="font-size:14px;"></i></div>
+    <div class="step-label">Input Data</div>
+  </div>
+  <div class="step-connector done-line"></div>
+  <div class="step-item">
+    <div class="step-circle done"><i class="fa-solid fa-check" style="font-size:14px;"></i></div>
+    <div class="step-label">Matriks</div>
+  </div>
+  <div class="step-connector done-line"></div>
+  <div class="step-item">
+    <div class="step-circle active">3</div>
+    <div class="step-label active-label">Hasil</div>
+  </div>
+</div>
+
+<!-- Stat Summary -->
+<div class="stat-grid mb-5">
+  <div class="stat-card indigo">
+    <div class="stat-icon indigo">📋</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ nama_kriteria|length }}</div>
+      <div class="stat-label">Total Kriteria</div>
+    </div>
+  </div>
+  <div class="stat-card cyan">
+    <div class="stat-icon cyan">🏢</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ ranking|length }}</div>
+      <div class="stat-label">Total Alternatif</div>
+    </div>
+  </div>
+  <div class="stat-card emerald">
+    <div class="stat-icon emerald">✅</div>
+    <div class="stat-info">
+      <div class="stat-value {% if CR <= 0.1 %}cr-ok{% else %}cr-bad{% endif %}">{{ '%.4f'|format(CR) }}</div>
+      <div class="stat-label">Consistency Ratio</div>
+    </div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-icon amber">🏆</div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:16px;line-height:1.2;">{{ ranking[0][0] if ranking else '-' }}</div>
+      <div class="stat-label">Alternatif Terbaik</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bobot Kriteria -->
+<div class="card mb-5">
+  <div class="card-header">
+    <div class="card-title"><span class="icon">📊</span> Bobot Kriteria</div>
+  </div>
+  <div class="criteria-cards">
+    {% set criteria_styles = [
+      ('#EF4444','#FEF2F2','🔧'),
+      ('#4F46E5','#EEF2FF','📚'),
+      ('#06B6D4','#ECFEFF','📊'),
+      ('#F59E0B','#FFFBEB','💰'),
+    ] %}
+    {% for i in range(nama_kriteria|length) %}
+    {% set color, bg, emoji = criteria_styles[i] %}
+    <div class="criteria-card">
+      <div class="criteria-icon" style="background:{{ bg }}">{{ emoji }}</div>
+      <div class="criteria-info">
+        <div class="criteria-name">{{ nama_kriteria[i] }}</div>
+        <div class="criteria-weight" style="color:{{ color }}">{{ '%.1f'|format(weights[i]*100) }}%</div>
+        <div class="criteria-bar">
+          <div class="criteria-bar-fill" style="width:{{ '%.1f'|format(weights[i]*100) }}%;background:{{ color }};"></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Ranking Table -->
+<div class="card mb-5">
+  <div class="card-header">
+    <div class="card-title"><span class="icon">🏆</span> Ranking Alternatif</div>
+    <div>
+      <span class="badge {% if CR <= 0.1 %}badge-emerald{% else %}badge-danger{% endif %}">
+        CR: {{ '%.4f'|format(CR) }} {% if CR <= 0.1 %}✓ Konsisten{% else %}✗ Tidak Konsisten{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px;text-align:center;">Rank</th>
+          <th>Nama Alternatif</th>
+          <th style="min-width:200px;">Skor Prioritas</th>
+          <th style="text-align:right;">Nilai</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in ranking %}
+        {% set rank = loop.index %}
+        <tr>
+          <td style="text-align:center;">
+            <div class="rank-badge {% if rank == 1 %}rank-1{% elif rank == 2 %}rank-2{% elif rank == 3 %}rank-3{% else %}rank-n{% endif %}">
+              {{ rank }}
+            </div>
+          </td>
+          <td style="font-weight:600;">{{ item[0] }}</td>
+          <td>
+            <div class="score-bar">
+              <div class="score-bar-track">
+                <div class="score-bar-fill" style="width:{{ '%.1f'|format(item[1]*100) }}%;"></div>
+              </div>
+              <div class="score-text">{{ '%.1f'|format(item[1]*100) }}%</div>
+            </div>
+          </td>
+          <td style="text-align:right;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;">{{ '%.4f'|format(item[1]) }}</td>
+          <td>
+            {% if rank == 1 %}
+              <span class="badge badge-emerald">🥇 Prioritas Utama</span>
+            {% elif rank == 2 %}
+              <span class="badge badge-indigo">🥈 Prioritas Kedua</span>
+            {% elif rank == 3 %}
+              <span class="badge badge-slate">🥉 Prioritas Ketiga</span>
+            {% else %}
+              <span class="badge badge-slate">Alternatif {{ rank }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Winner Card -->
+{% if ranking %}
+<div class="card mb-5" style="background:var(--grad-primary);color:#fff;border:none;">
+  <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+    <div style="font-size:52px;">🏆</div>
+    <div style="flex:1;">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-bottom:4px;">Rekomendasi Terbaik</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:800;color:#fff;">{{ ranking[0][0] }}</div>
+      <div style="opacity:.8;margin-top:4px;font-size:14px;">
+        Skor Prioritas: <strong>{{ '%.4f'|format(ranking[0][1]) }}</strong>
+        ({{ '%.1f'|format(ranking[0][1]*100) }}%)
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <a href="{{ url_for('dashboard_view') }}" class="btn btn-lg" style="background:rgba(255,255,255,0.2);color:#fff;border:1.5px solid rgba(255,255,255,0.35);">
+        <i class="fa-solid fa-chart-pie"></i> Lihat Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Actions -->
+<div style="display:flex;gap:12px;flex-wrap:wrap;">
+  <a href="{{ url_for('alternatif_input') }}" class="btn btn-secondary">
+    <i class="fa-solid fa-rotate"></i> Analisis Baru
+  </a>
+  <a href="{{ url_for('dashboard_view') }}" class="btn btn-primary">
+    <i class="fa-solid fa-chart-pie"></i> Dashboard Visual
+  </a>
+  <a href="{{ url_for('history') }}" class="btn btn-secondary">
+    <i class="fa-solid fa-clock-rotate-left"></i> Lihat Riwayat
+  </a>
+</div>
+
+{% endblock %}

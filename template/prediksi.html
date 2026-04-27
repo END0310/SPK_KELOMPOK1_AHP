@@ -1,0 +1,91 @@
+{% extends "base_sidebar.html" %}
+{% block title %}Prediksi{% endblock %}
+{% block page_title %}Data Prediksi{% endblock %}
+{% block page_subtitle %}Riwayat data prediksi keputusan dari analisis AHP{% endblock %}
+
+{% block content %}
+
+{% if error %}
+<div class="alert alert-danger">
+  <i class="fa-solid fa-circle-exclamation"></i>
+  <span>{{ error }}</span>
+</div>
+{% endif %}
+
+{% if data %}
+
+{% for row in data %}
+<div class="card mb-5">
+  <div class="card-header">
+    <div class="card-title">
+      <div class="rank-badge rank-n" style="width:28px;height:28px;font-size:12px;">{{ loop.index }}</div>
+      <span>Prediksi #{{ row.id }}</span>
+    </div>
+    <span class="badge badge-indigo">{{ row.banyak_alternatif }} Alternatif</span>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:50px;text-align:center;">Rank</th>
+          <th>Nama Alternatif</th>
+          <th style="min-width:200px;">Skor Visual</th>
+          <th style="text-align:right;">Bobot</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in row.hasil_keputusan %}
+        {% set rank = loop.index %}
+        <tr>
+          <td style="text-align:center;">
+            <div class="rank-badge {% if rank==1 %}rank-1{% elif rank==2 %}rank-2{% elif rank==3 %}rank-3{% else %}rank-n{% endif %}">{{ rank }}</div>
+          </td>
+          <td style="font-weight:600;">{{ item[0] }}</td>
+          <td>
+            <div class="score-bar">
+              <div class="score-bar-track">
+                <div class="score-bar-fill" style="width:{{ '%.1f'|format(item[1]*100) }}%;"></div>
+              </div>
+              <div class="score-text">{{ '%.1f'|format(item[1]*100) }}%</div>
+            </div>
+          </td>
+          <td style="text-align:right;font-weight:700;">{{ '%.4f'|format(item[1]) }}</td>
+          <td>
+            {% if rank == 1 %}
+              <span class="badge badge-emerald">🥇 Prioritas Utama</span>
+            {% elif rank == 2 %}
+              <span class="badge badge-indigo">🥈 Prioritas Kedua</span>
+            {% elif rank == 3 %}
+              <span class="badge badge-slate">🥉 Prioritas Ketiga</span>
+            {% else %}
+              <span class="badge badge-slate">Alternatif {{ rank }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-icon">🔮</div>
+    <div class="empty-title">Belum Ada Data Prediksi</div>
+    <div class="empty-desc">Data prediksi akan muncul setelah analisis AHP selesai dilakukan.</div>
+    <div style="margin-top:24px;">
+      <a href="{{ url_for('alternatif_input') }}" class="btn btn-primary">
+        <i class="fa-solid fa-play"></i> Mulai Analisis
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

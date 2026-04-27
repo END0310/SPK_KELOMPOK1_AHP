@@ -1,0 +1,230 @@
+{% extends "base_sidebar.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard Analitik{% endblock %}
+{% block page_subtitle %}Visualisasi hasil analisis AHP secara komprehensif{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stat Grid -->
+<div class="stat-grid mb-5">
+  <div class="stat-card indigo">
+    <div class="stat-icon indigo">📋</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ k }}</div>
+      <div class="stat-label">Total Kriteria</div>
+    </div>
+  </div>
+  <div class="stat-card cyan">
+    <div class="stat-icon cyan">🏢</div>
+    <div class="stat-info">
+      <div class="stat-value">{{ a }}</div>
+      <div class="stat-label">Total Alternatif</div>
+    </div>
+  </div>
+  <div class="stat-card emerald">
+    <div class="stat-icon emerald">{% if CR <= 0.1 %}✅{% else %}❌{% endif %}</div>
+    <div class="stat-info">
+      <div class="stat-value {% if CR <= 0.1 %}cr-ok{% else %}cr-bad{% endif %}">{{ '%.4f'|format(CR) }}</div>
+      <div class="stat-label">CR Kriteria {% if CR <= 0.1 %}(Konsisten){% else %}(Tidak Konsisten){% endif %}</div>
+    </div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-icon amber">🏆</div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:15px;line-height:1.3;">{{ ranking[0][0] if ranking else '-' }}</div>
+      <div class="stat-label">Alternatif Terbaik</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;max-height:380px;" class="chart-row">
+
+  <!-- Bar Chart: Ranking Alternatif -->
+  <div class="card chart-card">
+    <div class="chart-title"><i class="fa-solid fa-chart-bar" style="color:var(--primary)"></i> Skor Prioritas Alternatif</div>
+    <div style="flex:1;min-height:0;">
+      <canvas id="rankingChart" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- Doughnut: Bobot Kriteria -->
+  <div class="card chart-card">
+    <div class="chart-title"><i class="fa-solid fa-chart-pie" style="color:var(--secondary)"></i> Distribusi Bobot Kriteria</div>
+    <div style="flex:1;min-height:0;">
+      <canvas id="criteriaChart" height="260"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- Ranking Table -->
+<div class="card mb-5">
+  <div class="card-header">
+    <div class="card-title"><span class="icon">📊</span> Tabel Ranking Lengkap</div>
+    <span class="badge {% if CR <= 0.1 %}badge-emerald{% else %}badge-danger{% endif %}">
+      CR={{ '%.4f'|format(CR) }}
+    </span>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px;text-align:center;">Rank</th>
+          <th>Alternatif</th>
+          <th style="min-width:220px;">Skor Visual</th>
+          <th style="text-align:right;">Skor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in ranking %}
+        {% set rank = loop.index %}
+        <tr>
+          <td style="text-align:center;">
+            <div class="rank-badge {% if rank==1 %}rank-1{% elif rank==2 %}rank-2{% elif rank==3 %}rank-3{% else %}rank-n{% endif %}">{{ rank }}</div>
+          </td>
+          <td style="font-weight:600;">{{ item[0] }}</td>
+          <td>
+            <div class="score-bar">
+              <div class="score-bar-track">
+                <div class="score-bar-fill" style="width:{{ '%.1f'|format(item[1]*100) }}%;"></div>
+              </div>
+              <div class="score-text">{{ '%.1f'|format(item[1]*100) }}%</div>
+            </div>
+          </td>
+          <td style="text-align:right;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;">{{ '%.4f'|format(item[1]) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Bobot Kriteria Cards -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><span class="icon">⚖️</span> Bobot Kriteria</div>
+  </div>
+  <div class="criteria-cards">
+    {% set criteria_styles = [
+      ('#EF4444','#FEF2F2','🔧'),
+      ('#4F46E5','#EEF2FF','📚'),
+      ('#06B6D4','#ECFEFF','📊'),
+      ('#F59E0B','#FFFBEB','💰'),
+    ] %}
+    {% for i in range(nama_kriteria|length) %}
+    {% set color, bg, emoji = criteria_styles[i] %}
+    <div class="criteria-card">
+      <div class="criteria-icon" style="background:{{ bg }}">{{ emoji }}</div>
+      <div class="criteria-info">
+        <div class="criteria-name">{{ nama_kriteria[i] }}</div>
+        <div class="criteria-weight" style="color:{{ color }}">{{ '%.1f'|format(weights[i]*100) }}%</div>
+        <div class="criteria-bar">
+          <div class="criteria-bar-fill" style="width:{{ '%.1f'|format(weights[i]*100) }}%;background:{{ color }};"></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const rankingLabels = {{ ranking_labels | tojson }};
+const rankingScores = {{ ranking_scores | tojson }};
+const criteriaLabels = {{ nama_kriteria | tojson }};
+const criteriaWeights = {{ weights | tojson }};
+
+const palette = ['#4F46E5','#7C3AED','#06B6D4','#10B981','#F59E0B','#EF4444'];
+
+// Bar Chart
+new Chart(document.getElementById('rankingChart'), {
+  type: 'bar',
+  data: {
+    labels: rankingLabels,
+    datasets: [{
+      label: 'Skor Prioritas',
+      data: rankingScores,
+      backgroundColor: rankingLabels.map((_, i) => palette[i % palette.length] + 'CC'),
+      borderColor:     rankingLabels.map((_, i) => palette[i % palette.length]),
+      borderWidth: 2,
+      borderRadius: 8,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `Skor: ${(ctx.raw * 100).toFixed(2)}%`
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: '#F1F5F9' },
+        ticks: {
+          callback: v => (v * 100).toFixed(1) + '%',
+          font: { family: 'DM Sans', size: 11 }
+        }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { font: { family: 'DM Sans', size: 11 } }
+      }
+    }
+  }
+});
+
+// Doughnut Chart
+const critColors = ['#EF4444','#4F46E5','#06B6D4','#F59E0B'];
+new Chart(document.getElementById('criteriaChart'), {
+  type: 'doughnut',
+  data: {
+    labels: criteriaLabels,
+    datasets: [{
+      data: criteriaWeights,
+      backgroundColor: critColors.map(c => c + 'DD'),
+      borderColor: critColors,
+      borderWidth: 2,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          font: { family: 'DM Sans', size: 11 },
+          padding: 16,
+          usePointStyle: true
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.label}: ${(ctx.raw * 100).toFixed(1)}%`
+        }
+      }
+    }
+  }
+});
+
+// Responsive chart grid on small screens
+if (window.innerWidth < 700) {
+  document.querySelector('.chart-row').style.gridTemplateColumns = '1fr';
+}
+</script>
+{% endblock %}

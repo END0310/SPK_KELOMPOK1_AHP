@@ -1,0 +1,164 @@
+{% extends "base_sidebar.html" %}
+{% block title %}Matriks Perbandingan{% endblock %}
+{% block page_title %}Matriks Perbandingan{% endblock %}
+{% block page_subtitle %}Langkah 2 dari 3 — Isi perbandingan berpasangan antar alternatif{% endblock %}
+
+{% block content %}
+
+<!-- Step Indicator -->
+<div class="steps-wrapper">
+  <div class="step-item">
+    <div class="step-circle done"><i class="fa-solid fa-check" style="font-size:14px;"></i></div>
+    <div class="step-label">Input Data</div>
+  </div>
+  <div class="step-connector done-line"></div>
+  <div class="step-item">
+    <div class="step-circle active">2</div>
+    <div class="step-label active-label">Matriks</div>
+  </div>
+  <div class="step-connector pending-line"></div>
+  <div class="step-item">
+    <div class="step-circle inactive">3</div>
+    <div class="step-label">Hasil</div>
+  </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+  <i class="fa-solid fa-circle-exclamation"></i>
+  <span>{{ error }}</span>
+</div>
+{% endif %}
+
+<!-- Bobot Kriteria Cards -->
+<div class="mb-3">
+  <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;">
+    Bobot Kriteria (Matriks Tetap)
+  </div>
+  <div class="text-muted mb-4">Bobot kriteria telah ditetapkan menggunakan matriks perbandingan tetap</div>
+</div>
+
+<div class="criteria-cards mb-6">
+  {% set criteria_styles = [
+    ('#EF4444','#FEF2F2','🔧'),
+    ('#4F46E5','#EEF2FF','📚'),
+    ('#06B6D4','#ECFEFF','📊'),
+    ('#F59E0B','#FFFBEB','💰'),
+  ] %}
+  {% for i in range(nama_kriteria|length) %}
+  {% set color, bg, emoji = criteria_styles[i] %}
+  <div class="criteria-card">
+    <div class="criteria-icon" style="background:{{ bg }}">{{ emoji }}</div>
+    <div class="criteria-info">
+      <div class="criteria-name">{{ nama_kriteria[i] }}</div>
+      <div class="criteria-weight" style="color:{{ color }}">{{ '%.1f'|format(weights[i]*100) }}%</div>
+      <div class="criteria-bar">
+        <div class="criteria-bar-fill" style="width:{{ '%.1f'|format(weights[i]*100) }}%;background:{{ color }};"></div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- CR Kriteria -->
+<div class="alert alert-info mb-6" style="display:inline-flex;align-items:center;gap:10px;">
+  <i class="fa-solid fa-circle-check"></i>
+  <span>Consistency Ratio (CR) Kriteria: <strong class="cr-value {% if CR <= 0.1 %}cr-ok{% else %}cr-bad{% endif %}">{{ '%.4f'|format(CR) }}</strong>
+    {% if CR <= 0.1 %} — <span style="color:var(--success)">Konsisten ✓</span>
+    {% else %} — <span style="color:var(--danger)">Tidak Konsisten ✗</span>{% endif %}
+  </span>
+</div>
+
+<form method="POST" action="{{ url_for('alternatif_matrix') }}" id="matrixForm">
+
+{% for c in range(k) %}
+{% set color, bg, emoji = criteria_styles[c] %}
+
+<!-- Matrix Card per Kriteria -->
+<div class="card mb-5">
+  <div class="card-header">
+    <div class="card-title">
+      <span style="background:{{ bg }};color:{{ color }};padding:6px 10px;border-radius:8px;font-size:14px;">{{ emoji }} {{ nama_kriteria[c] }}</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">Bobot: <strong style="color:{{ color }}">{{ '%.1f'|format(weights[c]*100) }}%</strong></div>
+  </div>
+
+  <p class="text-muted mb-4">Bandingkan setiap pasang alternatif. Nilai 1-9 (lebih baik) atau 1/2–1/9 (lebih buruk).</p>
+
+  <!-- Saaty Scale Reference -->
+  <div class="saaty-picks mb-4">
+    <span style="font-size:11px;color:var(--text-muted);font-weight:600;margin-right:4px;">Skala Saaty:</span>
+    <span class="saaty-btn saaty-1">1 = Sama</span>
+    <span class="saaty-btn saaty-3">3 = Sedikit</span>
+    <span class="saaty-btn saaty-5">5 = Cukup</span>
+    <span class="saaty-btn saaty-7">7 = Sangat</span>
+    <span class="saaty-btn saaty-9">9 = Ekstrem</span>
+    <span class="saaty-btn saaty-frac">1/3</span>
+    <span class="saaty-btn saaty-frac">1/5</span>
+    <span class="saaty-btn saaty-frac">1/7</span>
+    <span class="saaty-btn saaty-frac">1/9</span>
+  </div>
+
+  <div class="matrix-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th style="min-width:130px;">Alternatif</th>
+          {% for j in range(a) %}
+          <th style="min-width:110px;text-align:center;">{{ nama_alt[j] }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in range(a) %}
+        <tr style="{% if i % 2 == 0 %}background:#FAFBFF;{% endif %}">
+          <td style="font-weight:600;color:var(--text);">{{ nama_alt[i] }}</td>
+          {% for j in range(a) %}
+          <td style="text-align:center;">
+            {% if i == j %}
+              <span class="matrix-cell-diagonal">1</span>
+            {% elif j > i %}
+              {% set key = 'alt_m_' ~ c ~ '_' ~ i ~ '_' ~ j %}
+              <input type="text" name="{{ key }}" id="{{ key }}"
+                     class="matrix-input"
+                     value="{{ raw_inputs.get(key, '') }}"
+                     placeholder="e.g. 3" />
+            {% else %}
+              <span style="font-size:12px;color:var(--text-subtle);font-style:italic;">resiprokal</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Actions -->
+<div style="display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-top:8px;">
+  <a href="{{ url_for('alternatif_input') }}" class="btn btn-secondary">
+    <i class="fa-solid fa-arrow-left"></i> Kembali
+  </a>
+  <button type="submit" class="btn btn-primary btn-lg">
+    <i class="fa-solid fa-calculator"></i> Hitung &amp; Lihat Hasil
+  </button>
+</div>
+
+</form>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Saaty quick-pick: click fills the focused/nearby input
+document.querySelectorAll('.saaty-btn').forEach(btn => {
+  btn.style.cursor = 'pointer';
+  btn.addEventListener('click', () => {
+    const focused = document.querySelector('.matrix-input:focus');
+    if (focused) focused.value = btn.textContent.trim();
+  });
+});
+</script>
+{% endblock %}

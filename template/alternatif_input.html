@@ -1,0 +1,113 @@
+{% extends "base_sidebar.html" %}
+{% block title %}Input Alternatif{% endblock %}
+{% block page_title %}Input Alternatif{% endblock %}
+{% block page_subtitle %}Langkah 1 dari 3 — Tentukan alternatif fasilitas{% endblock %}
+
+{% block content %}
+
+<!-- Step Indicator -->
+<div class="steps-wrapper">
+  <div class="step-item">
+    <div class="step-circle active">1</div>
+    <div class="step-label active-label">Input Data</div>
+  </div>
+  <div class="step-connector pending-line"></div>
+  <div class="step-item">
+    <div class="step-circle inactive">2</div>
+    <div class="step-label">Matriks</div>
+  </div>
+  <div class="step-connector pending-line"></div>
+  <div class="step-item">
+    <div class="step-circle inactive">3</div>
+    <div class="step-label">Hasil</div>
+  </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+  <i class="fa-solid fa-circle-exclamation"></i>
+  <span>{{ error }}</span>
+</div>
+{% endif %}
+
+<form method="POST" action="{{ url_for('alternatif_input') }}" id="mainForm">
+
+  <!-- Card 1: Jumlah Alternatif -->
+  <div class="card mb-5">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">🔢</span> Jumlah Alternatif</div>
+    </div>
+    <p class="text-muted mb-4">Masukkan jumlah fasilitas yang akan dibandingkan (2 – 20 alternatif)</p>
+
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div class="number-spinner-wrapper">
+        <button type="button" class="spinner-btn" onclick="changeCount(-1)">−</button>
+        <input type="number" name="alternatif" id="alternatif"
+               class="spinner-input" value="{{ a or 2 }}" min="2" max="20"
+               oninput="updateAltFields()" />
+        <button type="button" class="spinner-btn" onclick="changeCount(1)">+</button>
+      </div>
+      <span class="text-muted">alternatif (maks. 20)</span>
+    </div>
+  </div>
+
+  <!-- Card 2: Nama Alternatif -->
+  <div class="card mb-5" id="alt-names-card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">✏️</span> Nama Alternatif</div>
+    </div>
+    <p class="text-muted mb-4">Berikan nama untuk setiap fasilitas yang akan dinilai</p>
+
+    <div class="input-grid" id="alt-names-container">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+      <i class="fa-solid fa-arrow-left"></i> Kembali
+    </a>
+    <button type="submit" class="btn btn-primary">
+      Lanjut ke Matriks <i class="fa-solid fa-arrow-right"></i>
+    </button>
+  </div>
+
+</form>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const savedNames = {{ (session.get('nama_alt', []) | tojson) if session.get('nama_alt') else '[]' }};
+
+function changeCount(delta) {
+  const inp = document.getElementById('alternatif');
+  let v = parseInt(inp.value) + delta;
+  v = Math.max(2, Math.min(20, v));
+  inp.value = v;
+  updateAltFields();
+}
+
+function updateAltFields() {
+  const count = parseInt(document.getElementById('alternatif').value) || 2;
+  const container = document.getElementById('alt-names-container');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const saved = savedNames[i] || '';
+    container.innerHTML += `
+      <div class="form-group">
+        <label class="form-label">
+          <span class="rank-badge rank-n" style="display:inline-flex;margin-right:6px;width:22px;height:22px;font-size:11px;">${i+1}</span>
+          Alternatif ${i+1}
+        </label>
+        <input type="text" name="alt_${i}" class="form-control"
+               placeholder="Nama fasilitas ke-${i+1}"
+               value="${saved}" required />
+      </div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', updateAltFields);
+</script>
+{% endblock %}

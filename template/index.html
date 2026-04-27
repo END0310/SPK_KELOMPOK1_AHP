@@ -1,0 +1,114 @@
+{% extends "base_sidebar.html" %}
+{% block title %}Beranda{% endblock %}
+{% block page_title %}Beranda{% endblock %}
+{% block page_subtitle %}Selamat datang di Sistem Pendukung Keputusan AHP{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<div class="hero-section">
+  <div class="hero-title">⚖️ Sistem Pendukung Keputusan</div>
+  <div class="hero-sub">
+    Metode <strong>Analytical Hierarchy Process (AHP)</strong> untuk penentuan prioritas perbaikan fasilitas kampus
+    secara objektif, konsisten, dan terstruktur.
+  </div>
+  <div style="margin-top:28px; display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('alternatif_input') }}" class="btn btn-primary btn-lg" style="background:#fff;color:var(--primary);box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+      <i class="fa-solid fa-play"></i> Mulai Analisis
+    </a>
+    <a href="{{ url_for('dashboard_view') }}" class="btn btn-lg" style="background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.3);">
+      <i class="fa-solid fa-chart-pie"></i> Lihat Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Criteria Cards -->
+<div class="mb-4">
+  <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">
+    Kriteria Penilaian
+  </div>
+  <div class="text-muted mb-4">4 kriteria tetap yang digunakan dalam perhitungan AHP</div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap:20px; margin-bottom:32px;">
+
+  <div class="card" style="border-left:4px solid #EF4444; animation-delay:0ms;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:48px;height:48px;background:#FEF2F2;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🔧</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;">Kriteria 1</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">Tingkat Kerusakan</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Seberapa parah kerusakan fasilitas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left:4px solid #4F46E5; animation-delay:50ms;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:48px;height:48px;background:#EEF2FF;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📚</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;">Kriteria 2</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">Dampak Akademik</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Pengaruh terhadap kegiatan belajar</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left:4px solid #06B6D4; animation-delay:100ms;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:48px;height:48px;background:#ECFEFF;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📊</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;">Kriteria 3</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">Frekuensi Penggunaan</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Intensitas pemakaian fasilitas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left:4px solid #F59E0B; animation-delay:150ms;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:48px;height:48px;background:#FFFBEB;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">💰</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;">Kriteria 4</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">Biaya Perbaikan</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Estimasi biaya yang dibutuhkan</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- How it works -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><span class="icon">🗺️</span> Alur Penggunaan Sistem</div>
+  </div>
+  <div style="display:flex;gap:0;align-items:flex-start;flex-wrap:wrap;">
+    {% set steps = [
+      ('1', 'fa-list-check', 'Input Alternatif', 'Masukkan jumlah &amp; nama alternatif fasilitas yang akan dinilai'),
+      ('2', 'fa-table-cells', 'Isi Matriks', 'Bandingkan setiap pasang alternatif untuk tiap kriteria'),
+      ('3', 'fa-calculator', 'Proses AHP', 'Sistem menghitung bobot, konsistensi, dan skor akhir'),
+      ('4', 'fa-trophy', 'Lihat Hasil', 'Ranking alternatif terbaik siap digunakan sebagai keputusan'),
+    ] %}
+    {% for num, icon, title, desc in steps %}
+    <div style="flex:1;min-width:160px;padding:20px;position:relative;text-align:center;">
+      <div style="width:52px;height:52px;background:var(--grad-primary);border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;box-shadow:0 4px 12px rgba(79,70,229,0.3);">
+        {{ num }}
+      </div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px;">{{ title }}</div>
+      <div style="font-size:12px;color:var(--text-muted);">{{ desc }}</div>
+    </div>
+    {% if not loop.last %}
+    <div style="align-self:center;color:#CBD5E1;font-size:20px;padding:0 4px;margin-bottom:40px;">→</div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <div class="divider"></div>
+  <div style="text-align:center;">
+    <a href="{{ url_for('alternatif_input') }}" class="btn btn-primary btn-lg">
+      <i class="fa-solid fa-rocket"></i> Mulai Sekarang
+    </a>
+  </div>
+</div>
+
+{% endblock %}
