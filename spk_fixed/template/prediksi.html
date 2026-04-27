@@ -1,0 +1,64 @@
+{% extends "base_sidebar.html" %}
+{% block content %}
+<div class="card">
+    <h2>🗄️ Tabel Prediksi</h2>
+    <p style="color:#555; margin-bottom:1rem;">
+        Riwayat semua prediksi/keputusan yang telah disimpan ke database.
+    </p>
+
+    {% if error %}
+    <div class="error-box">{{ error }}</div>
+    {% endif %}
+
+    {% if data %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Banyak Alternatif</th>
+                    <th>Nama Alternatif</th>
+                    <th>Bobot Alternatif</th>
+                    <th>Hasil Keputusan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td><strong>#{{ row.id }}</strong></td>
+                    <td style="text-align:center;">{{ row.banyak_alternatif }}</td>
+                    <td>
+                        <ul style="margin:0; padding-left:1rem; font-size:0.85rem;">
+                        {% for n in row.nama_alternatif %}
+                            <li>{{ n }}</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                    <td>
+                        <ul style="margin:0; padding-left:1rem; font-size:0.85rem;">
+                        {% for b in row.bobot_alternatif %}
+                            <li>{{ "%.4f"|format(b) }}</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                    <td>
+                        <ol style="margin:0; padding-left:1.2rem; font-size:0.85rem;">
+                        {% for item in row.hasil_keputusan %}
+                            <li><strong>{{ item[0] }}</strong> ({{ "%.4f"|format(item[1]) }})</li>
+                        {% endfor %}
+                        </ol>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:2rem; color:#888;">
+        <div style="font-size:3rem; margin-bottom:1rem;">🗄️</div>
+        <p>Belum ada data prediksi tersimpan.</p>
+        <a href="{{ url_for('alternatif_input') }}" class="btn-primary" style="margin-top:1rem;">Mulai Analisis</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

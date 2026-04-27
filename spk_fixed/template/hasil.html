@@ -1,0 +1,139 @@
+{% extends "base_sidebar.html" %}
+{% block content %}
+<style>
+    .step-indicator {
+        display: flex; align-items: center; gap: 0; margin-bottom: 2rem; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .step {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.6rem 1.1rem; border-radius: 20px;
+        font-size: 0.85rem; font-weight: 600;
+        background: #e0e0e0; color: #888;
+    }
+    .step.active { background: #1976d2; color: white; }
+    .step.done { background: #388e3c; color: white; }
+    .step-arrow { color: #bbb; font-size: 1.1rem; margin: 0 0.2rem; }
+    .step-circle {
+        width: 22px; height: 22px; border-radius: 50%;
+        background: rgba(255,255,255,0.3); display: flex;
+        align-items: center; justify-content: center;
+        font-size: 0.75rem; font-weight: 700;
+    }
+    .ranking-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 32px; height: 32px; border-radius: 50%; background: #1976d2;
+        color: white; font-weight: 700; font-size: 0.9rem;
+    }
+    .rank-1 .ranking-badge { background: linear-gradient(135deg,#f9a825,#f57f17); }
+    .rank-2 .ranking-badge { background: linear-gradient(135deg,#78909c,#546e7a); }
+    .rank-3 .ranking-badge { background: linear-gradient(135deg,#8d6e63,#5d4037); }
+    .highlight-row { background:#e8f5e9 !important; }
+</style>
+
+<!-- STEP INDICATOR -->
+<div class="step-indicator">
+    <div class="step done"><div class="step-circle">✓</div> Jumlah Alternatif</div>
+    <span class="step-arrow">→</span>
+    <div class="step done"><div class="step-circle">✓</div> Nama Alternatif</div>
+    <span class="step-arrow">→</span>
+    <div class="step done"><div class="step-circle">✓</div> Tabel Perbandingan</div>
+    <span class="step-arrow">→</span>
+    <div class="step active"><div class="step-circle">4</div> Hasil Analisis</div>
+</div>
+
+{% if error %}
+<div class="error-box">❌ {{ error }}</div>
+{% else %}
+
+<div class="success-box">
+    ✅ <strong>Analisis selesai!</strong> Hasil telah otomatis tersimpan ke Riwayat Analisis.
+</div>
+
+<!-- SUMMARY -->
+<div class="card">
+    <h2>📋 Ringkasan Analisis</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.2rem;">
+        <div style="background:#e3f2fd; border-radius:8px; padding:1rem; text-align:center; border-top:3px solid #1976d2;">
+            <div style="font-size:1.8rem; font-weight:700; color:#1976d2;">{{ nama_kriteria|length }}</div>
+            <div style="font-size:0.8rem; color:#666;">Total Kriteria</div>
+        </div>
+        <div style="background:#e8f5e9; border-radius:8px; padding:1rem; text-align:center; border-top:3px solid #388e3c;">
+            <div style="font-size:1.8rem; font-weight:700; color:#388e3c;">{{ ranking|length }}</div>
+            <div style="font-size:0.8rem; color:#666;">Total Alternatif</div>
+        </div>
+        <div style="background:#{{ 'e8f5e9' if CR <= 0.1 else 'ffebee' }}; border-radius:8px; padding:1rem; text-align:center; border-top:3px solid #{{ '388e3c' if CR <= 0.1 else 'e53935' }};">
+            <div style="font-size:1.8rem; font-weight:700; color:#{{ '388e3c' if CR <= 0.1 else 'e53935' }};">{{ "%.4f"|format(CR) }}</div>
+            <div style="font-size:0.8rem; color:#666;">CR {{ '✔ Konsisten' if CR <= 0.1 else '✘ Tidak Konsisten' }}</div>
+        </div>
+        <div style="background:#fff3e0; border-radius:8px; padding:1rem; text-align:center; border-top:3px solid #f57c00; overflow:hidden;">
+            <div style="font-size:1rem; font-weight:700; color:#f57c00; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{ ranking[0][0] if ranking else '-' }}
+            </div>
+            <div style="font-size:0.8rem; color:#666;">🥇 Alternatif Terbaik</div>
+        </div>
+    </div>
+
+    <h3>📊 Bobot Kriteria</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>#</th><th>Kriteria</th><th>Bobot</th><th>Persentase</th></tr></thead>
+            <tbody>
+                {% for i in range(nama_kriteria|length) %}
+                <tr>
+                    <td>{{ i+1 }}</td>
+                    <td><strong>{{ nama_kriteria[i] }}</strong></td>
+                    <td>{{ "%.6f"|format(weights[i]) }}</td>
+                    <td><strong>{{ "%.2f"|format(weights[i]*100) }}%</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- RANKING -->
+<div class="card">
+    <h3>🏆 Ranking Alternatif</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Rank</th><th>Alternatif</th><th>Score</th><th>Persentase</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for nama, skor in ranking %}
+                <tr class="{{ 'highlight-row rank-' ~ loop.index }}">
+                    <td><span class="ranking-badge">{{ loop.index }}</span></td>
+                    <td><strong>{{ nama }}</strong></td>
+                    <td>{{ "%.6f"|format(skor) }}</td>
+                    <td><strong>{{ "%.2f"|format(skor*100) }}%</strong></td>
+                    <td>
+                        {% if loop.index == 1 %}🥇 Prioritas Utama
+                        {% elif loop.index == 2 %}🥈 Prioritas Kedua
+                        {% elif loop.index == 3 %}🥉 Prioritas Ketiga
+                        {% else %}Rank {{ loop.index }}{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="background:#e8f5e9; border-radius:6px; padding:1rem; margin-top:1rem; text-align:center; color:#1b5e20;">
+        <strong>Total Score: {{ "%.4f"|format(total_score) }}</strong> — Semua alternatif tercakup ✅
+    </div>
+</div>
+
+<!-- SAVED TO HISTORY NOTICE -->
+<div class="info-box">
+    <strong>📚 Tersimpan Otomatis:</strong> Hasil analisis ini telah disimpan ke Riwayat Analisis.
+    Klik <strong>"Lihat Riwayat"</strong> untuk melihat semua analisis yang pernah dilakukan.
+</div>
+
+{% endif %}
+
+<div class="btn-group">
+    <a href="{{ url_for('dashboard_view') }}" class="btn-primary">📊 Lihat Dashboard Analytics</a>
+    <a href="{{ url_for('history') }}" class="btn-secondary">📚 Lihat Riwayat</a>
+    <a href="{{ url_for('alternatif_input') }}" class="btn-secondary">🔄 Analisis Baru</a>
+    <button onclick="window.print()" class="btn-secondary">🖨️ Cetak</button>
+</div>
+{% endblock %}

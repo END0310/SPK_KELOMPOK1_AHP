@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPK AHP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+        .sidebar {
+            height: 100vh; width: 260px; position: fixed; top: 0; left: 0;
+            background: linear-gradient(180deg, #0d47a1 0%, #1565c0 60%, #1976d2 100%);
+            color: white; overflow-y: auto; z-index: 100;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+        }
+        .sidebar-brand {
+            background: rgba(0,0,0,0.2); padding: 1.5rem 1.2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar-brand h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .sidebar-brand p { font-size: 0.75rem; opacity: 0.75; }
+        .sidebar-section {
+            padding: 0.8rem 1rem 0.3rem; font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.6; margin-top: 0.5rem;
+        }
+        .sidebar a {
+            padding: 0.75rem 1.4rem; text-decoration: none; font-size: 0.92rem;
+            color: rgba(255,255,255,0.88); display: flex; align-items: center; gap: 0.7rem;
+            border-left: 3px solid transparent; transition: all 0.2s;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255,255,255,0.12); border-left-color: #fff; color: #fff;
+        }
+        .sidebar a .icon { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+        .main-content { margin-left: 260px; min-height: 100vh; }
+        .topbar {
+            background: white; padding: 1rem 1.8rem; border-bottom: 1px solid #e0e0e0;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+        .topbar-title { font-weight: 600; color: #333; font-size: 1.05rem; }
+        .topbar-badge {
+            background: #e3f2fd; color: #1565c0;
+            padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+        }
+        .page-body { padding: 1.8rem; }
+        .card {
+            background: white; border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+            padding: 1.8rem; margin-bottom: 1.5rem;
+        }
+        .card h2, .card h3 { margin-top: 0; }
+        .hero {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white; padding: 2.5rem 1.8rem; margin-bottom: 1.8rem; border-radius: 10px;
+        }
+        .hero h1 { color: white; margin: 0 0 0.5rem; font-size: 1.8rem; }
+        .hero p { opacity: 0.85; margin: 0; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: #333; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #ddd;
+            border-radius: 6px; font-size: 0.95rem; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+        }
+        .btn-primary {
+            background: #1976d2; color: white; border: none;
+            padding: 0.7rem 1.6rem; border-radius: 6px; font-size: 0.95rem;
+            font-weight: 600; cursor: pointer; text-decoration: none;
+            display: inline-block; transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #1565c0; }
+        .btn-secondary {
+            background: #607d8b; color: white; border: none;
+            padding: 0.7rem 1.6rem; border-radius: 6px; font-size: 0.95rem;
+            cursor: pointer; text-decoration: none; display: inline-block;
+        }
+        .btn-secondary:hover { background: #546e7a; }
+        .btn-success {
+            background: #388e3c; color: white; border: none;
+            padding: 0.7rem 1.6rem; border-radius: 6px; font-size: 0.95rem;
+            cursor: pointer; text-decoration: none; display: inline-block;
+        }
+        .btn-block { width: 100%; text-align: center; }
+        .btn-group { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1976d2; color: white; padding: 0.75rem 1rem; text-align: left; font-size: 0.9rem; }
+        td { padding: 0.7rem 1rem; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        tr:hover td { background: #f5f9ff; }
+        .table-wrapper { overflow-x: auto; border-radius: 8px; }
+        .error-box {
+            background: #ffebee; border: 1px solid #ef9a9a;
+            border-left: 4px solid #e53935; color: #c62828;
+            padding: 1rem; border-radius: 6px; margin-bottom: 1.2rem;
+        }
+        .info-box {
+            background: #e3f2fd; border-left: 4px solid #1976d2;
+            padding: 1rem; border-radius: 6px; margin-bottom: 1.2rem; color: #0d47a1;
+        }
+        .success-box {
+            background: #e8f5e9; border-left: 4px solid #388e3c;
+            padding: 1rem; border-radius: 6px; margin-bottom: 1.2rem; color: #1b5e20;
+        }
+        footer {
+            background: #f5f5f5; padding: 1.2rem; text-align: center;
+            color: #888; font-size: 0.85rem; margin-top: 2rem; border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <h2>🎯 SPK AHP</h2>
+            <p>Sistem Pendukung Keputusan</p>
+        </div>
+        <div class="sidebar-section">Input Data</div>
+        <a href="{{ url_for('alternatif_input') }}"
+           class="{{ 'active' if request.endpoint == 'alternatif_input' else '' }}">
+            <span class="icon">📋</span> Menu Alternatif
+        </a>
+        <div class="sidebar-section">Analisis</div>
+        <a href="{{ url_for('alternatif_matrix') }}"
+           class="{{ 'active' if request.endpoint == 'alternatif_matrix' else '' }}">
+            <span class="icon">🔢</span> Perbandingan Alternatif
+        </a>
+        <div class="sidebar-section">Hasil</div>
+        <a href="{{ url_for('dashboard_view') }}"
+           class="{{ 'active' if request.endpoint == 'dashboard_view' else '' }}">
+            <span class="icon">📊</span> Dashboard
+        </a>
+        <a href="{{ url_for('history') }}"
+           class="{{ 'active' if request.endpoint == 'history' else '' }}">
+            <span class="icon">📚</span> History Analisis
+        </a>
+        <a href="{{ url_for('prediksi') }}"
+           class="{{ 'active' if request.endpoint == 'prediksi' else '' }}">
+            <span class="icon">🗄️</span> Tabel Prediksi
+        </a>
+        <div class="sidebar-section">Lainnya</div>
+        <a href="{{ url_for('index') }}"
+           class="{{ 'active' if request.endpoint == 'index' else '' }}">
+            <span class="icon">🏠</span> Beranda
+        </a>
+    </div>
+    <div class="main-content">
+        <div class="topbar">
+            <span class="topbar-title">SPK AHP — Analytic Hierarchy Process</span>
+            <span class="topbar-badge">4 Kriteria Tetap</span>
+        </div>
+        <div class="page-body">
+            {% block content %}{% endblock %}
+        </div>
+        <footer>&copy; 2026 SPK AHP System | Powered by Analytic Hierarchy Process</footer>
+    </div>
+</body>
+</html>
